@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Générateur EMMY — BAR-TH-160 / 161 — Effy Cert</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{--bleu:#161637;--jaune:#FFF164;--chaux:#FCFBF8;--gris:#5B5B6E;--griscl:#E9E9EF;
+    --vert:#1E8E5A;--rouge:#C0392B;--ambre:#B7791F;--ink:#22222E;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--chaux);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  code,.mono{font-family:"SF Mono",ui-monospace,Consolas,monospace}
+  header.top{background:var(--bleu);color:#fff;padding:18px 26px;display:flex;align-items:center;
+    justify-content:space-between;border-bottom:3px solid var(--jaune)}
+  header.top .brand{font-weight:800;font-size:20px;letter-spacing:.3px}
+  header.top .brand span{color:var(--jaune)}
+  header.top .tag{font-size:12px;color:#c7c7d6;text-align:right;line-height:1.35}
+  main{max-width:1080px;margin:0 auto;padding:22px 20px 90px}
+  .card{background:#fff;border:1px solid var(--griscl);border-radius:10px;padding:18px 20px;margin-bottom:18px;
+    box-shadow:0 1px 2px rgba(22,22,55,.04)}
+  .card h2{margin:0 0 4px;font-size:15px;color:var(--bleu);display:flex;align-items:center;gap:8px}
+  .card .hint{color:var(--gris);font-size:12.5px;margin:0 0 14px}
+  label{display:block;font-size:12px;font-weight:600;color:var(--bleu);margin:0 0 4px}
+  input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--griscl);border-radius:7px;
+    font-size:13px;font-family:inherit;background:#fff;color:var(--ink)}
+  input:focus,select:focus{outline:2px solid var(--jaune);outline-offset:-1px;border-color:var(--bleu)}
+  .row{display:grid;gap:12px}
+  .row.c2{grid-template-columns:1fr 1fr}.row.c3{grid-template-columns:1fr 1fr 1fr}
+  .field{margin-bottom:10px}
+  button{cursor:pointer;border:none;border-radius:8px;font-weight:700;font-size:13px;padding:9px 16px;
+    font-family:inherit;transition:transform .04s, box-shadow .15s}
+  button:active{transform:translateY(1px)}
+  .btn-primary{background:var(--bleu);color:#fff}.btn-primary:hover{box-shadow:0 2px 10px rgba(22,22,55,.25)}
+  .btn-accent{background:var(--jaune);color:var(--bleu)}.btn-accent:hover{box-shadow:0 2px 10px rgba(255,241,100,.5)}
+  .btn-ghost{background:#fff;color:var(--bleu);border:1px solid var(--griscl)}.btn-ghost:hover{background:var(--chaux)}
+  .btn-mini{padding:5px 10px;font-size:12px;border-radius:6px}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .seg{display:inline-flex;border:1px solid var(--griscl);border-radius:8px;overflow:hidden}
+  .seg button{border-radius:0;background:#fff;color:var(--gris);font-weight:600;padding:8px 18px}
+  .seg button.on{background:var(--bleu);color:#fff}
+  .status{font-size:12.5px;padding:9px 12px;border-radius:7px;margin-top:12px;display:none}
+  .status.show{display:block}
+  .status.ok{background:#e7f5ee;color:#176b44;border:1px solid #bce3cf}
+  .status.err{background:#fdecea;color:#8c2c22;border:1px solid #f2c4bd}
+  .status.work{background:#fff8d6;color:#7a5d00;border:1px solid #efe09a}
+  .banner{background:#fff8d6;border:1px solid #efe09a;color:#6b5300;border-radius:8px;padding:11px 14px;
+    font-size:12.5px;margin-bottom:18px}
+  .banner b{color:var(--bleu)}
+  .empty{text-align:center;color:var(--gris);padding:46px 20px;border:1px dashed var(--griscl);border-radius:10px}
+  .empty .big{font-size:15px;color:var(--bleu);font-weight:700;margin-bottom:6px}
+  .importbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--chaux);
+    border:2px dashed var(--griscl);border-radius:9px;padding:14px 16px;margin-bottom:16px;
+    transition:border-color .15s, background .15s}
+  .importbar.drag{border-color:var(--jaune);background:#fffdf0}
+  .importbar.drag *{pointer-events:none}
+  .importbar .lbl{font-size:12.5px;color:var(--bleu);font-weight:700}
+  .importbar .sub{font-size:11.5px;color:var(--gris);flex:1;min-width:160px}
+  .importbar .drop-hint{font-size:11px;color:var(--gris);font-style:italic}
+  .dossier{border:1px solid var(--griscl);border-radius:10px;margin-bottom:14px;overflow:hidden}
+  .dossier>.head{background:var(--chaux);padding:12px 16px;display:flex;align-items:center;gap:12px;
+    cursor:pointer;border-bottom:1px solid var(--griscl)}
+  .dossier>.head .ref{font-weight:800;color:var(--bleu);font-size:14px}
+  .dossier>.head .who{color:var(--gris);font-size:12.5px;flex:1}
+  .dossier>.head .pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:var(--bleu);color:#fff}
+  .dossier>.head .lines{font-size:11.5px;color:var(--vert);font-weight:700}
+  .dossier>.head .synced{font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px}
+  .synced.yes{background:#e7f5ee;color:#176b44}.synced.no{background:#f4f4f7;color:var(--gris)}
+  .synced.ecart{background:#fff0d6;color:#8a5200;border:1px solid #f5c97a}
+  .field.ecart input{border-color:#f5a623;background:#fffbf0}
+  .field.ecart label{color:#8a5200}
+  .ecart-tip{font-size:11px;color:#8a5200;margin-top:3px;padding:4px 8px;background:#fff8e1;
+    border:1px solid #f5c97a;border-radius:5px;display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap}
+  .ecart-tip .src{font-weight:700;white-space:nowrap}
+  .ecart-tip .val{font-family:"SF Mono",ui-monospace,Consolas,monospace;font-size:10.5px;
+    background:#fff0cc;border-radius:3px;padding:1px 5px}
+  .dossier>.head .mand{font-size:12px;font-weight:700;color:var(--bleu);
+    background:#e8e8f5;border-radius:6px;padding:2px 8px;white-space:nowrap}
+  .dossier>.body{padding:16px;display:none}.dossier.open>.body{display:block}
+  .dossier>.head .chev{transition:transform .2s;color:var(--gris)}
+  .dossier.open>.head .chev{transform:rotate(90deg)}
+  .subhead{font-size:11px;font-weight:800;letter-spacing:.6px;color:var(--gris);text-transform:uppercase;
+    margin:16px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--griscl)}
+  .subhead:first-child{margin-top:0}
+  table.tech{width:100%;border-collapse:collapse;margin-top:6px}
+  table.tech th{font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);
+    text-align:left;padding:6px 8px;border-bottom:1px solid var(--griscl)}
+  table.tech td{padding:6px 8px;border-bottom:1px solid var(--griscl);vertical-align:middle}
+  table.tech input{padding:6px 8px;font-size:12.5px}
+  table.tech .trlabel{font-weight:600;color:var(--bleu);font-size:12.5px}
+  table.tech .code{font-family:"SF Mono",ui-monospace,Consolas,monospace;font-size:12px;color:var(--gris)}
+  table.tech .code b{color:var(--bleu)}
+  .preview{margin-top:14px;background:var(--bleu);border-radius:9px;padding:14px 16px;color:#fff}
+  .preview .ptitle{font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--jaune);font-weight:800;margin-bottom:10px}
+  .preview .pline{display:flex;align-items:center;gap:10px;font-family:"SF Mono",ui-monospace,Consolas,monospace;
+    font-size:12px;padding:6px 0;border-top:1px solid rgba(255,255,255,.12);flex-wrap:wrap}
+  .preview .pline:first-of-type{border-top:none}
+  .preview .pref{color:var(--jaune);font-weight:700;min-width:150px}
+  .preview .arrow{color:#7c7c95}
+  .preview .chip{background:rgba(255,255,255,.1);border-radius:5px;padding:2px 8px}
+  .preview .chip b{color:var(--jaune)}
+  .preview .empty-prev{color:#9a9ab0;font-size:12px;font-style:italic}
+  .ml-input{max-width:280px}
+  .note-inline{font-size:11.5px;color:var(--ambre);margin-top:4px}
+  details.adv{margin-top:10px}
+  details.adv summary{cursor:pointer;font-size:12px;font-weight:700;color:var(--gris)}
+  details.adv[open] summary{color:var(--bleu)}
+  .footer-actions{position:sticky;bottom:0;background:rgba(252,251,248,.94);backdrop-filter:blur(6px);
+    border-top:1px solid var(--griscl);padding:14px 20px;display:flex;align-items:center;gap:14px;
+    justify-content:flex-end;margin:0 -20px -90px;flex-wrap:wrap}
+  .footer-actions .count{margin-right:auto;font-size:13px;color:var(--gris)}
+  .footer-actions .count b{color:var(--bleu)}
+  @media(max-width:720px){.row.c2,.row.c3{grid-template-columns:1fr 1fr}header.top .tag{display:none}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">effy<span>Cert</span> · Générateur EMMY</div>
+  <div class="tag">Dépôt CEE — fiches BAR-TH-160 / BAR-TH-161<br>Outil interne CP · document réglementé</div>
+</header>
+<main>
+  <div class="banner">
+    <b>Document officiel et réglementé.</b> L'outil charge les dossiers depuis Airtable, importe le tableau de
+    synthèse COFRAC et applique le codage technique automatiquement. Le demandeur est <b>toujours EFFY</b>.
+    Tout reste modifiable : <b>vérifiez chaque dossier avant export</b>.
+  </div>
+
+  <div class="card">
+    <h2>1 · Connexion &amp; sélection</h2>
+    <p class="hint">Jeton Airtable (PAT), fiche et statut à déposer, puis chargez les dossiers.</p>
+    <div class="row c2">
+      <div class="field">
+        <label for="pat">Jeton Airtable (Personal Access Token)</label>
+        <input id="pat" type="password" placeholder="patXXXXXXXX..." autocomplete="off">
+        <div class="note-inline" id="patNote" style="display:none">Jeton mémorisé sur cet appareil.</div>
+      </div>
+      <div class="field">
+        <label for="entite">Entité demandeur (EFFY)</label>
+        <select id="entite">
+          <option value="cert">Effy Cert — SIREN 794 562 256 (TPM)</option>
+          <option value="connect">Effy Connect — SIREN 504 201 716 (TOP)</option>
+        </select>
+      </div>
+    </div>
+    <div class="row c3">
+      <div class="field">
+        <label for="ficheSelect">Fiche opération</label>
+        <select id="ficheSelect" style="font-weight:700;color:var(--bleu)">
+          <option value="BAR-TH-161">BAR-TH-161 — Points singuliers (housses)</option>
+          <option value="BAR-TH-160">BAR-TH-160 — Réseau hydraulique</option>
+          <option value="BAR-TH-171" disabled>BAR-TH-171 — (à venir)</option>
+          <option value="BAR-TH-172" disabled>BAR-TH-172 — (à venir)</option>
+          <option value="TRA-EQ-114" disabled>TRA-EQ-114 — (à venir)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="statut">Statut à déposer</label>
+        <select id="statut">
+          <option value="Attente de dépôt">Attente de dépôt</option>
+          <option value="Charge Emmy attente verrouillage">Charge Emmy — attente verrouillage</option>
+          <option value="Attente Contrôle COFRAC">Attente Contrôle COFRAC</option>
+          <option value="En cours d'instruction par PNCEE">En cours d'instruction PNCEE</option>
+        </select>
+      </div>
+      <div class="field" style="display:flex;align-items:flex-end">
+        <button class="btn-primary" id="loadBtn" style="width:100%">Charger les dossiers</button>
+      </div>
+    </div>
+    <details class="adv">
+      <summary>Paramètres avancés (base / table)</summary>
+      <div class="row c2" style="margin-top:10px">
+        <div class="field"><label for="baseId">Base ID</label><input id="baseId" value="appWojIRBp4LGE4qZ"></div>
+        <div class="field"><label for="tableId">Table Dossiers</label><input id="tableId" value="tblpvX1DdVpYOJ7kf"></div>
+      </div>
+    </details>
+    <div class="status" id="cfgStatus"></div>
+  </div>
+
+  <div class="card">
+    <h2>2 · Dossiers <span id="fLabel" class="mono" style="font-weight:600;color:var(--gris);font-size:12px"></span></h2>
+    <p class="hint" id="dossHint">Chargez les dossiers, importez la synthèse COFRAC (.xlsx) — l'outil apparie par référence,
+      remplit l'administratif et code les housses par tranche. Corrigez si besoin, puis générez le CSV.</p>
+    <div class="importbar" id="importBar" style="display:none">
+      <span class="lbl">Tableau de synthèse COFRAC</span>
+      <span class="sub">Glissez-déposez le fichier .xlsx ici, ou cliquez pour le choisir — appariement automatique par « REFERENCE interne de l'opération ».</span>
+      <input type="file" id="synFile" accept=".xlsx,.xls" style="display:none">
+      <button class="btn-accent btn-mini" id="synBtn">Choisir un fichier (.xlsx)</button>
+    </div>
+    <div class="status" id="synStatus"></div>
+    <div id="dossiers"></div>
+    <div class="empty" id="emptyState">
+      <div class="big">Aucun dossier chargé</div>
+      <div>Renseignez le jeton et cliquez sur « Charger les dossiers ».</div>
+    </div>
+  </div>
+</main>
+
+<div class="footer-actions">
+  <div class="count" id="footCount"></div>
+  <button class="btn-ghost" id="reloadBtn" disabled>Recharger</button>
+  <button class="btn-accent" id="genBtn" disabled>Générer le CSV EMMY</button>
+</div>
+
+<script>
+const EMMY_HEADER = ["Code équipement", "Date de début", "Date de fin", "Date de la facture", "Tableau Recapitulatif champ 1", "Tableau Recapitulatif champ 2", "Tableau Recapitulatif champ 3", "Tableau Recapitulatif champ 4", "Tableau Recapitulatif champ 5", "Tableau Recapitulatif champ 6", "Tableau Recapitulatif champ 7", "Tableau Recapitulatif champ 8", "Tableau Recapitulatif champ 9", "Tableau Recapitulatif champ 10", "Tableau Recapitulatif champ 11", "Tableau Recapitulatif champ 12", "Tableau Recapitulatif champ 13", "Tableau Recapitulatif champ 14", "Tableau Recapitulatif champ 15", "Tableau Recapitulatif champ 16", "Tableau Recapitulatif champ 17", "Tableau Recapitulatif champ 18", "Tableau Recapitulatif champ 19", "Tableau Recapitulatif champ 20", "Tableau Recapitulatif champ 21", "Tableau Recapitulatif champ 22", "Tableau Recapitulatif champ 23", "Tableau Recapitulatif champ 24", "Tableau Recapitulatif champ 25", "Tableau Recapitulatif champ 26", "Tableau Recapitulatif champ 27", "Tableau Recapitulatif champ 28", "Tableau Recapitulatif champ 29", "Tableau Recapitulatif champ 30", "Tableau Recapitulatif champ 31", "PAEE", "SME", "Bonus coup de pouce", "Cas précarité", "Nombre total de ménages", "Nombre total de ménages occupant des logements sociaux", "Nombre de ménages en situation de précarité", "Nombre de ménages en situation de grande précarité", "Pourcentage de ménages en situation de précarité /modeste", "Pourcentage de ménages en situation de grande précarité /précarité", "Menage Modeste", " Nombre de Menage Modeste", " Ancienneté", "Type de logement", "Département", "Altitude", "Iles", "Nombre d'opérations", "Résistance Thermique", "Energie de chauffage", "Surface (m²)", "PES", "COP", "Nombre de pièces", "Surface habitable", "Usage", "Type de chauffage", "PTH", "Mètre linéaire (m)", "Type", "Type appareil", "Participation financière (en Euros)", "Secteur", "Branche", "Puissance chaudière", "Application", "Puissance (en Watts)", "Puissance BTU", "Puissance Tube", "Puissance Lampe iodure", "Type Lampe", "Source d'énergie", "CRN - Chaleur renouvelable nette/an (en kWhth)", "Type de canalisation", "DN aller", "Duree moyenne", "Mode de fonctionnement", "Puissance luminaire", "Type de moteur", "Type d'application", "Application moteur", "Combustible", "Longueur UTI", "Durée du contrat", "Type autobus", "Type véhicule", "Longueur canalisation (m)", "Contrat", "C'ref", "C'projet", "Shon (m²)", "Caisson", "Part des besoins", "TCB", "Locaux", "Lux", "Nombre de blocs", "Durée de vie", "Réfrigérant", "C (en % surface des bâtiments existants alimentés)", "Type condenseur", "Vecs", "Type transformateur", "Pertes à vide", "Pertes en charge", "Nombre moyen d'utilisateurs", "Activité", "Température de la source (en °C)", "P comp eau/eau", "P pompe cond", "Dcta", "Delta T °C", "T Condensation initiale °C", "Production de froid", "Montant des ventes de lubrifiants en m3", "Performance « fuel economy » du lubrifiant en %", "Nombre de pneus", "Nombre de kilomètres", "Classe énergétique", "Delta T condenseur", "Niveau d'évaporation", "Type d'installation", "Somme", "Energy Efficiency Ratio", "Nombre de capteurs", "Nombre de fenêtres ou porte-fenêtres", "Régulateur de jets", "Cadre de la demande", "Durée de garantie de performance du CPE", "Facteur solaire", "Type de transport", "Typologie d'autoroute ferroviaire", "Cef initial", "Cef projet", "Ubât initial", "Ubât projet", "Pourcentage d'économie d'énergie garantie par le CPE", "T.km", "P récup", "P conso", "Conso. spécifique", "Production annuelle", "Gain préchauffage", "Ecart de température", "Installation", "Récupération pour valorisation", "Bassin de navigation fluviale", "Rg à 0°C", "Rg à -20°C", "Hauteur du local h (en mètres)", "Nombre d'effets", "Pourcentage", "Nombre de places maternité", "Nombre de places post sevrage", "Versement au fonds", "Facteur de proportionnalité", "Type montage", "Teff", "Type meuble", "Position du groupe de production", "Coefficient de bonification", "Nature du fluide distribué", "Année de mise en circulation", "Gain dû à l'équipement", "Longueur de meubles frigorifiques équipés de couvercles (m)", "Nombre de points singuliers isolés", "Montant en kWh Cumac", "Type de ventilation", "Type de séquenceur", "Nombre de compresseurs pilotés", "Durée annuelle d'utilisation du réseau", "Nombre d'appartements", "Type delta T condenseur", "Coefficient", "Volume", "Gain (%)", "Concentration", "COPré", "Multisplit", "Taux (%)", "Efficacité énergétique saisonnière", "Cas", "R", "Indice de protection aux chocs (IK)", "Système de gestion de l'éclairage", "Dimensions du tube  LED", "Type d'acquisition", "Mode de chauffage", "Moyenne des émissions de CO2 en gCO2/km des véhicules acquis ou loués", "Puissance Lampe LED", "Rg pondéré", "Nombre d'entités", "Cefmax : consommation conventionnelle d'énergie maximale", "Cefbat : consommation conventionnelle d'énergie du bâtiment", "Flux lumineux", "choix 1", "choix 2", "choix 3", "choix 4", "choix 5", "choix 6", "Commentaire", "Numéro d'identification du membre", "QPV", "Total précarité", "Total classique"];
+
+/* SIREN professionnels (installateurs) connus — à compléter au fil du temps */
+const PRO_SIREN = {
+  "POLYMAGE":    "350311403",
+  "AREL":        "792906505",
+  "AREL ENERGIE":"792906505",
+};
+function getProSiren(nom){ if(!nom) return ""; const k=Object.keys(PRO_SIREN).find(x=>x.toUpperCase()===nom.toUpperCase()); return k?PRO_SIREN[k]:""; }
+
+/* SIREN mandataires connus — à compléter au fil du temps */
+const MAND_SIREN = {
+  "NEOCONSULT":  "889544979",
+  "NEO CONSULT": "889544979",
+  "POLYMAGE":    "350311403",
+  "AREL":        "792906505",
+  "AREL ENERGIE":"792906505",
+};
+function getMandSiren(nom){ if(!nom) return ""; const k=Object.keys(MAND_SIREN).find(x=>x.toUpperCase()===nom.toUpperCase()); return k?MAND_SIREN[k]:""; }
+
+const COL = {code:1,dateDebut:2,dateFin:3,dateFacture:4,ref:5,nomSite:6,adresse:8,cp:9,ville:10,
+  benefRS:11,benefSiren:12,siegeAdr:13,siegeCP:14,siegeVille:15,proSiren:16,proNom:17,parcelle:18,prime:21,
+  ctrlSiren:22,ctrlNom:23,siret:24,tel:25,email:26,participation:27,mandataire:28,mandSiren:29,neant:30,
+  paee:36,bonus:38,menageModeste:46,dept:50,altitude:51,iles:52,nbOp:53,
+  metreLineaire:64,dnAller:80,temperature:113,typeInstall:127,nbEntites:197,qpv:209,totalPrec:210,totalClass:211};
+
+const F = {fiche:"fldOwMrsHvwqDFx82",statut:"fldsZuOSu9FOiKhhz",ref:"fldwHUHPcviNz8GKf",
+  benef:"fldsJUdsGB8XAZI7p",adresse:"fldhavJW80ZKn89g0",cp:"fldKCBbOFzZ53mdqu",ville:"fldrR59MEDCUzZhbo",
+  tel:"fldG2RDUXy0f4XWpv",email:"fldM1DqsGKCQhsHfJ",participation:"fldG7x2rEgX2DDDBy",
+  mandataire:"fldG8oVQMjGcVNsth",pro:"fldAe2xjmpFrMWJ2K",
+  dateDebut:"fldSE6WsaeFLRJyLg",dateFin:"fld3LIUsq5E2Yal1Z",
+  cumacA:"fldeq1UghEwqJ7a3o",cumacB:"fldtApqryEgxQWGGE",cumacTot:"fldl7um95WKZrer5Q"};
+
+// index 0-based des colonnes de la synthèse COFRAC (template officiel BAR-TH-161)
+const SYN = {ref:3,nomSite:4,adresse:5,cp:6,ville:7,benefRS:8,benefSiren:9,siegeAdr:10,siegeCP:11,siegeVille:12,
+  volHorsPrec:13,volPrec:14,dateDebut:16,dateFin:17,proSiren:19,proNom:20,ctrlSiren:24,ctrlNom:25,siret:26,
+  tel:27,email:28,montant:31,ao:40,ap:41,aq:42,ar:43};
+
+let fiche="BAR-TH-161";
+let dossiers=[];
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function setStatus(el,m,k){el.className="status show "+k;el.textContent=m;}
+function isoToFr(d){if(!d)return"";const m=String(d).slice(0,10).split("-");return m.length===3?`${m[2]}/${m[1]}/${m[0]}`:String(d);}
+function deptFromCP(cp){cp=String(cp||"").trim();if(!cp)return"";return(cp.startsWith("97")||cp.startsWith("98"))?cp.slice(0,3):cp.slice(0,2);}
+function num2(v){const n=Number(v);return isNaN(n)?"":n.toFixed(2);}
+function codeTemp(t){if(t===""||t==null)return 0;t=Number(t);if(isNaN(t))return 0;return t<120?0:1;}
+
+function newTranches(){return [
+  {key:"ap",label:"Point singulier — DN ≤ 65",dnCode:0,type:"singulier",qte:"",temp:""},
+  {key:"aq",label:"Point singulier — 65 < DN ≤ 100",dnCode:1,type:"singulier",qte:"",temp:""},
+  {key:"ar",label:"Point singulier — 100 < DN",dnCode:2,type:"singulier",qte:"",temp:""},
+  {key:"ao",label:"Échangeur à plaque",dnCode:0,type:"echangeur",qte:"",temp:""}
+];}
+
+async function airtableMeta(pat,baseId){
+  const r=await fetch(`https://api.airtable.com/v0/meta/bases/${baseId}/tables`,{headers:{Authorization:"Bearer "+pat}});
+  if(!r.ok)throw new Error("meta "+r.status); return r.json();
+}
+async function fetchDossiers(pat,baseId,tableId,formula,useFieldIds){
+  let out=[],offset=null;
+  do{
+    const u=new URL(`https://api.airtable.com/v0/${baseId}/${tableId}`);
+    if(useFieldIds) u.searchParams.set("returnFieldsByFieldId","true");
+    u.searchParams.set("pageSize","100");
+    if(formula)u.searchParams.set("filterByFormula",formula);
+    if(offset)u.searchParams.set("offset",offset);
+    const r=await fetch(u,{headers:{Authorization:"Bearer "+pat}});
+    if(!r.ok){const t=await r.text();throw new Error("records "+r.status+" "+t.slice(0,120));}
+    const j=await r.json();out=out.concat(j.records||[]);offset=j.offset;
+  }while(offset); return out;
+}
+
+async function load(){
+  const pat=$("#pat").value.trim(),baseId=$("#baseId").value.trim(),tableId=$("#tableId").value.trim();
+  const statut=$("#statut").value, st=$("#cfgStatus");
+  if(!pat){setStatus(st,"Renseignez le jeton Airtable.","err");return;}
+  lsSet("emmy_pat",pat); setStatus(st,"Connexion à Airtable…","work"); $("#loadBtn").disabled=true;
+  try{
+    // Noms de champs via /meta pour construire la formula (Airtable refuse les IDs dans filterByFormula)
+    let ficheName=null, statutName=null;
+    let debugLog=[];
+    try{
+      const meta=await airtableMeta(pat,baseId);
+      const tbl=(meta.tables||[]).find(x=>x.id===tableId);
+      if(tbl){const map={};tbl.fields.forEach(f=>map[f.id]=f.name);ficheName=map[F.fiche];statutName=map[F.statut];}
+      debugLog.push(`META OK — ficheField="${ficheName}" statutField="${statutName}"`);
+    }catch(e){debugLog.push(`META ERREUR: ${e.message}`);}
+
+    let recs;
+    if(ficheName && statutName){
+      const esc=s=>String(s).replace(/'/g,"\'");
+      const formula=`AND({${ficheName}}='${esc(fiche)}',{${statutName}}='${esc(statut)}')`;
+      debugLog.push(`CHEMIN A — formula: ${formula}`);
+      recs=await fetchDossiers(pat,baseId,tableId,formula,true);
+      debugLog.push(`CHEMIN A — ${recs.length} enregistrements reçus`);
+      if(recs.length>0) debugLog.push(`1er record fields keys: ${Object.keys(recs[0].fields||{}).slice(0,5).join(", ")}`);
+    } else {
+      debugLog.push(`CHEMIN B — récupération totale sans filtre`);
+      const all=await fetchDossiers(pat,baseId,tableId,null,false);
+      debugLog.push(`CHEMIN B — ${all.length} enregistrements total`);
+      if(all.length>0) debugLog.push(`1er record fields keys: ${Object.keys(all[0].fields||{}).slice(0,5).join(", ")}, val[0]: ${JSON.stringify(Object.values(all[0].fields||{})[0])}`);
+      recs=all.filter(r=>{
+        const flds=r.fields||{};
+        const hasFiche=Object.values(flds).some(v=>v===fiche);
+        const hasStatut=Object.values(flds).some(v=>{
+          if(typeof v==="string") return v.trim()===statut.trim();
+          if(v&&v.name) return v.name.trim()===statut.trim();
+          return false;
+        });
+        return hasFiche && hasStatut;
+      });
+      debugLog.push(`CHEMIN B — ${recs.length} après filtrage local`);
+    }
+
+    dossiers=recs.map(buildDossier);
+    renderDossiers();
+    const debugTxt=debugLog.join(" | ");
+    setStatus(st,`${dossiers.length} dossier(s) chargé(s). DEBUG: ${debugTxt}`,dossiers.length?"ok":"work");
+    $("#genBtn").disabled=dossiers.length===0;
+    $("#reloadBtn").disabled=false;
+    $("#importBar").style.display=dossiers.length?"flex":"none";
+  }catch(e){
+    setStatus(st,"Échec : "+e.message+" — vérifiez le jeton (scopes: data.records:read + schema.bases:read).","err");
+  }finally{ $("#loadBtn").disabled=false; }
+}
+
+function buildDossier(rec){
+  const f=rec.fields||{};
+  const mandRec=Array.isArray(f[F.mandataire])&&f[F.mandataire][0]?f[F.mandataire][0]:null;
+  // fldmTMf4FYPl9ZzpY = champ texte "Mandataire" (plus fiable avec returnFieldsByFieldId)
+  // fldG8oVQMjGcVNsth = linked record -> .name disponible selon le scope du PAT
+  const mandFromText=f["fldmTMf4FYPl9ZzpY"]||"";
+  const mandFromLink=(mandRec&&mandRec.name)?mandRec.name:"";
+  const mand=mandFromText||mandFromLink;
+  const mandSirenPrefill=getMandSiren(mand);
+  const cp=f[F.cp]||"";
+  const atAdresse=f[F.adresse]||"", atCP=cp, atVille=f[F.ville]||"";
+  const atBenef=f[F.benef]||"", atTel=f[F.tel]||"", atEmail=f[F.email]||"";
+  const atDateD=isoToFr(f[F.dateDebut]), atDateF=isoToFr(f[F.dateFin]);
+  const atParticip=f[F.participation]!=null?String(f[F.participation]):"";
+  const atTotC=num2(f[F.cumacTot]!=null?f[F.cumacTot]:(f[F.cumacA]||0));
+  return {
+    id:rec.id, ref:(f[F.ref]||"").trim(), synced:false, ecarts:{},
+    at:{adresse:atAdresse,cp:atCP,ville:atVille,benefRS:atBenef,tel:atTel,email:atEmail,
+        dateDebut:atDateD,dateFin:atDateF,participation:atParticip,totalClass:atTotC},
+    admin:{nomSite:"",adresse:atAdresse,cp:atCP,ville:atVille,
+      benefRS:atBenef,benefSiren:"",siegeAdr:"",siegeCP:"",siegeVille:"",
+      proSiren:getProSiren(f[F.pro]||""),proNom:f[F.pro]||"",parcelle:"",ctrlSiren:"",ctrlNom:"",siret:"",
+      tel:atTel,email:atEmail,participation:atParticip,
+      mandataire:mand,mandSiren:mandSirenPrefill,dateDebut:atDateD,dateFin:atDateF,
+      dept:deptFromCP(cp),totalPrec:num2(0),totalClass:atTotC},
+    metre:"", tranches:newTranches()
+  };
+}
+
+/* ===== Import synthèse COFRAC ===== */
+function pick(row,idx){const v=row[idx];return (v==null)?"":String(v).trim();}
+function pickNum(row,idx){const v=row[idx];if(v==null||v==="")return"";const n=Number(String(v).replace(/\s/g,"").replace(",","."));return isNaN(n)?"":n;}
+
+function importSynthese(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(new Uint8Array(e.target.result),{type:"array"});
+      const map={}; // ref -> row
+      wb.SheetNames.forEach(sn=>{
+        const ws=wb.Sheets[sn];
+        const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:""});
+        // header attendu en ligne 2 (index1) : col D = REFERENCE interne
+        rows.forEach((row,i)=>{
+          const ref=pick(row,SYN.ref);
+          if(!ref || /reference interne/i.test(ref)) return;
+          if(!/^[A-Za-z]/.test(ref) && !/\d/.test(ref)) return;
+          map[ref.toUpperCase()]=row;
+        });
+      });
+      let matched=0,unmatched=[];
+      dossiers.forEach(d=>{
+        const row=map[(d.ref||"").toUpperCase()];
+        if(!row){ if(d.ref) unmatched.push(d.ref); return; }
+        applySynRow(d,row); d.synced=true; matched++;
+      });
+      renderDossiers();
+      let msg=`Synthèse importée : ${matched}/${dossiers.length} dossier(s) appariés par référence.`;
+      if(unmatched.length) msg+=` Sans correspondance : ${unmatched.slice(0,6).join(", ")}${unmatched.length>6?"…":""}.`;
+      setStatus($("#synStatus"),msg,matched?"ok":"work");
+    }catch(err){ setStatus($("#synStatus"),"Lecture impossible : "+err.message,"err"); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function digitsOnly(s){return String(s||"").replace(/\D/g,"");}
+function norm(s){return String(s||"").trim().toLowerCase().replace(/\s+/g," ");}
+function applySynRow(d,row){
+  const a=d.admin; d.ecarts={};
+  // helper : maj champ + détection écart avec valeur Airtable
+  const set=(k,idx,isId)=>{
+    let v=isId?digitsOnly(pick(row,idx)):pick(row,idx); if(v==="") return;
+    const atVal=d.at&&d.at[k]!=null?String(d.at[k]):"";
+    if(atVal!=="" && norm(atVal)!==norm(v)) d.ecarts[k]={at:atVal,syn:v};
+    a[k]=v;
+  };
+  set("nomSite",SYN.nomSite); set("adresse",SYN.adresse); set("cp",SYN.cp); set("ville",SYN.ville);
+  set("benefRS",SYN.benefRS); set("benefSiren",SYN.benefSiren,true);
+  set("siegeAdr",SYN.siegeAdr); set("siegeCP",SYN.siegeCP); set("siegeVille",SYN.siegeVille);
+  set("proSiren",SYN.proSiren,true); set("proNom",SYN.proNom);
+  set("ctrlSiren",SYN.ctrlSiren,true); set("ctrlNom",SYN.ctrlNom); set("siret",SYN.siret,true);
+  set("tel",SYN.tel); set("email",SYN.email);
+  // dates
+  const dd=pick(row,SYN.dateDebut);
+  if(dd){if(d.at&&d.at.dateDebut&&norm(d.at.dateDebut)!==norm(dd)) d.ecarts.dateDebut={at:d.at.dateDebut,syn:dd}; a.dateDebut=dd;}
+  const df=pick(row,SYN.dateFin);
+  if(df){if(d.at&&d.at.dateFin&&norm(d.at.dateFin)!==norm(df)) d.ecarts.dateFin={at:d.at.dateFin,syn:df}; a.dateFin=df;}
+  a.dept=deptFromCP(a.cp);
+  const vp=pickNum(row,SYN.volPrec); if(vp!=="") a.totalPrec=num2(vp);
+  const vc=pickNum(row,SYN.volHorsPrec);
+  if(vc!==""){if(d.at&&d.at.totalClass&&norm(d.at.totalClass)!==norm(num2(vc))) d.ecarts.totalClass={at:d.at.totalClass,syn:num2(vc)}; a.totalClass=num2(vc);}
+  const mt=pickNum(row,SYN.montant);
+  if(mt!==""){if(d.at&&d.at.participation&&norm(d.at.participation)!==norm(String(mt))) d.ecarts.participation={at:d.at.participation,syn:String(mt)}; a.participation=mt;}
+  // SIREN mandataire : essayer col AD (idx29) de la synthèse, sinon dict embarqué
+  const synMandSiren=digitsOnly(pick(row,29));
+  if(synMandSiren && synMandSiren.length>=9) a.mandSiren=synMandSiren;
+  else if(!a.mandSiren) a.mandSiren=getMandSiren(a.mandataire);
+  const setT=(key,idx)=>{const n=pickNum(row,idx); const t=d.tranches.find(x=>x.key===key); if(t) t.qte=(n===""?"":n);};
+  setT("ap",SYN.ap); setT("aq",SYN.aq); setT("ar",SYN.ar); setT("ao",SYN.ao);
+}
+
+/* ===== Rendu ===== */
+function renderDossiers(){
+  const wrap=$("#dossiers"); wrap.innerHTML="";
+  $("#emptyState").style.display=dossiers.length?"none":"block";
+  $("#fLabel").textContent=dossiers.length?`· ${fiche}`:"";
+  dossiers.forEach((d,i)=>wrap.appendChild(renderCard(d,i)));
+  updateFootCount();
+}
+function inputField(label,val,onInput,ph="",ecart=null){
+  const w=document.createElement("div");w.className="field"+(ecart?" ecart":"");
+  w.innerHTML=`<label>${label}</label>`;
+  const inp=document.createElement("input");inp.value=val??"";if(ph)inp.placeholder=ph;
+  inp.addEventListener("input",e=>{onInput(e.target.value);w.classList.remove("ecart");const t=w.querySelector(".ecart-tip");if(t)t.remove();});
+  w.appendChild(inp);
+  if(ecart){
+    const tip=document.createElement("div");tip.className="ecart-tip";
+    tip.innerHTML=`<span class="src">Airtable :</span><span class="val">${ecart.at||"(vide)"}</span>`+
+      `<span class="src">Synthèse :</span><span class="val">${ecart.syn}</span>`+
+      `<span style="color:var(--gris)"> — valeur synthèse appliquée, modifiez si nécessaire</span>`;
+    w.appendChild(tip);
+  }
+  return w;
+}
+function renderCard(d,idx){
+  const card=document.createElement("div");card.className="dossier"+(idx===0?" open":"");
+  const lc=fiche==="BAR-TH-161"?countLines(d):1;
+  const nbEcarts=d.ecarts?Object.keys(d.ecarts).length:0;
+  const syncCls=!d.synced?"no":nbEcarts>0?"ecart":"yes";
+  const syncLbl=!d.synced?"synthèse —":nbEcarts>0?`${nbEcarts} écart(s) ⚠`:"synthèse ✓";
+  const mandTxt=d.admin.mandataire||"";
+  card.innerHTML=`<div class="head">
+      <span class="chev">▶</span>
+      <span class="ref">${d.ref||"(réf. manquante)"}</span>
+      ${mandTxt?`<span class="mand">${mandTxt}</span>`:""}
+      <span class="who">${d.admin.benefRS||""} ${d.admin.ville?("· "+d.admin.ville):""}</span>
+      <span class="synced ${syncCls}">${syncLbl}</span>
+      <span class="lines">${lc} ligne(s)</span>
+      <span class="pill">${fiche.replace("BAR-TH-","BAR ")}</span>
+    </div><div class="body"></div>`;
+  card.querySelector(".head").addEventListener("click",()=>card.classList.toggle("open"));
+  const body=card.querySelector(".body");
+
+  const E=d.ecarts||{};
+  const sh=document.createElement("div");sh.className="subhead";
+  const nbE=Object.keys(E).length;
+  sh.textContent="Données dossier (Airtable + synthèse — vérifier / compléter)"+(nbE?` · ${nbE} écart(s) en orange`:"");
+  if(nbE) sh.style.color="var(--ambre)";
+  body.appendChild(sh);
+  const r1=document.createElement("div");r1.className="row c2";
+  r1.appendChild(inputField("Réf. dossier (champ 1)",d.ref,v=>{d.ref=v;refreshCard(card,d);}));
+  r1.appendChild(inputField("Nom du site / copropriété (champ 2)",d.admin.nomSite,v=>d.admin.nomSite=v,"depuis la synthèse"));
+  body.appendChild(r1);
+  const r2=document.createElement("div");r2.className="row c3";
+  r2.appendChild(inputField("Adresse opération (champ 4)",d.admin.adresse,v=>d.admin.adresse=v,"",E.adresse));
+  r2.appendChild(inputField("CP (champ 5)",d.admin.cp,v=>{d.admin.cp=v;d.admin.dept=deptFromCP(v);},"",E.cp));
+  r2.appendChild(inputField("Ville (champ 6)",d.admin.ville,v=>d.admin.ville=v,"",E.ville));
+  body.appendChild(r2);
+  const r3=document.createElement("div");r3.className="row c2";
+  r3.appendChild(inputField("Bénéficiaire — raison sociale (champ 7)",d.admin.benefRS,v=>d.admin.benefRS=v,"",E.benefRS));
+  r3.appendChild(inputField("Bénéficiaire — SIREN (champ 8)",d.admin.benefSiren,v=>d.admin.benefSiren=v,"depuis la synthèse"));
+  body.appendChild(r3);
+  const r4=document.createElement("div");r4.className="row c3";
+  r4.appendChild(inputField("Date début = engagement (jj/mm/aaaa)",d.admin.dateDebut,v=>d.admin.dateDebut=v,"",E.dateDebut));
+  r4.appendChild(inputField("Date fin = facture (jj/mm/aaaa)",d.admin.dateFin,v=>d.admin.dateFin=v,"",E.dateFin));
+  r4.appendChild(inputField("Participation financière € (champ 23)",d.admin.participation,v=>d.admin.participation=v,"",E.participation));
+  body.appendChild(r4);
+  const r5=document.createElement("div");r5.className="row c2";
+  r5.appendChild(inputField("Mandataire CEE (champ 24)",d.admin.mandataire,v=>d.admin.mandataire=v));
+  r5.appendChild(inputField("SIREN mandataire (champ 25)",d.admin.mandSiren,v=>d.admin.mandSiren=v,d.admin.mandSiren?"":("ex. "+getMandSiren("NEOCONSULT"))));
+  body.appendChild(r5);
+  const r5b=document.createElement("div");r5b.className="row c2";
+  r5b.appendChild(inputField("Professionnel installateur — raison sociale (champ 13)",d.admin.proNom,v=>{d.admin.proNom=v;if(!d.admin.proSiren)d.admin.proSiren=getProSiren(v);},"",E.proNom||null));
+  r5b.appendChild(inputField("Professionnel installateur — SIREN (champ 12)",d.admin.proSiren,v=>d.admin.proSiren=v,d.admin.proSiren?"":"depuis la synthèse",E.proSiren||null));
+  body.appendChild(r5b);
+  const r6=document.createElement("div");r6.className="row c2";
+  r6.appendChild(inputField("Total précarité (kWh cumac)",d.admin.totalPrec,v=>d.admin.totalPrec=v));
+  r6.appendChild(inputField("Total classique (kWh cumac)",d.admin.totalClass,v=>d.admin.totalClass=v,"",E.totalClass));
+  body.appendChild(r6);
+
+  const adv=document.createElement("details");adv.className="adv";
+  adv.innerHTML="<summary>Champs complémentaires (professionnel, organisme de contrôle, siège, SIRET…)</summary>";
+  const a1=document.createElement("div");a1.className="row c2";a1.style.marginTop="10px";
+  adv.appendChild(a1);
+  const a2=document.createElement("div");a2.className="row c3";
+  a2.appendChild(inputField("Siège bénéf. — adresse (champ 9)",d.admin.siegeAdr,v=>d.admin.siegeAdr=v));
+  a2.appendChild(inputField("Siège — CP (champ 10)",d.admin.siegeCP,v=>d.admin.siegeCP=v));
+  a2.appendChild(inputField("Siège — ville (champ 11)",d.admin.siegeVille,v=>d.admin.siegeVille=v));
+  adv.appendChild(a2);
+  const a3=document.createElement("div");a3.className="row c3";
+  a3.appendChild(inputField("Organisme contrôle — nom (champ 19)",d.admin.ctrlNom,v=>d.admin.ctrlNom=v));
+  a3.appendChild(inputField("Organisme contrôle — SIREN (champ 18)",d.admin.ctrlSiren,v=>d.admin.ctrlSiren=v));
+  a3.appendChild(inputField("SIRET (champ 20)",d.admin.siret,v=>d.admin.siret=v));
+  adv.appendChild(a3); body.appendChild(adv);
+
+  if(fiche==="BAR-TH-161"){
+    const th=document.createElement("div");th.className="subhead";
+    th.textContent="Housses par tranche (synthèse COFRAC — AO/AP/AQ/AR) · une ligne EMMY par tranche non nulle";
+    body.appendChild(th); body.appendChild(renderTranches(card,d));
+    const prev=document.createElement("div");prev.className="preview";prev.dataset.role="preview";
+    body.appendChild(prev); renderPreview(prev,d);
+  }else{
+    const th=document.createElement("div");th.className="subhead";
+    th.textContent="Mètre linéaire (Mesure Retenue Airtable en priorité, sinon synthèse COFRAC)";body.appendChild(th);
+    const w=document.createElement("div");w.className="field ml-input";
+    w.innerHTML="<label>Mètre linéaire (m) — colonne 64</label>";
+    const inp=document.createElement("input");inp.type="number";inp.step="0.1";inp.value=d.metre;inp.placeholder="ex. 102.0";
+    inp.addEventListener("input",e=>d.metre=e.target.value);w.appendChild(inp);
+    const note=document.createElement("div");note.className="note-inline";
+    note.textContent="Reportez la Mesure Retenue (Airtable) si renseignée ; sinon le mètre linéaire de la synthèse.";
+    w.appendChild(note);body.appendChild(w);
+  }
+  return card;
+}
+function renderTranches(card,d){
+  const tbl=document.createElement("table");tbl.className="tech";
+  tbl.innerHTML=`<thead><tr><th>Tranche (synthèse)</th><th>Quantité de housses</th>
+    <th>Température fluide (°C)</th><th>Codes EMMY</th></tr></thead><tbody></tbody>`;
+  const tb=tbl.querySelector("tbody");
+  d.tranches.forEach(t=>{
+    const tr=document.createElement("tr");
+    const c1=document.createElement("td");c1.innerHTML=`<span class="trlabel">${t.label}</span>`;
+    const c2=document.createElement("td");const iq=document.createElement("input");
+    iq.type="number";iq.value=t.qte;iq.placeholder="0";
+    iq.addEventListener("input",e=>{t.qte=e.target.value;refreshCard(card,d);});c2.appendChild(iq);
+    const c3=document.createElement("td");const it=document.createElement("input");
+    it.type="number";it.value=t.temp;it.placeholder="< 120 par défaut";
+    it.addEventListener("input",e=>{t.temp=e.target.value;refreshCard(card,d);});c3.appendChild(it);
+    const c4=document.createElement("td");c4.className="code";
+    c4.innerHTML=`DN <b>${t.dnCode}</b> · T <b id="tc"></b> · type <b>${t.type==="echangeur"?1:0}</b>`;
+    c4.querySelector("#tc").textContent=codeTemp(t.temp);
+    tr.append(c1,c2,c3,c4);tb.appendChild(tr);
+  });
+  const wrap=document.createElement("div");wrap.appendChild(tbl);
+  const note=document.createElement("div");note.className="note-inline";
+  note.textContent="Le code DN et le type sont fixés par la tranche. La température est à 0 par défaut (fluide 50–120 °C) ; saisissez une valeur ≥ 120 si besoin.";
+  wrap.appendChild(note);return wrap;
+}
+function rerender(){renderDossiers();}
+function refreshCard(card,d){
+  const lc=fiche==="BAR-TH-161"?countLines(d):1;
+  const el=card.querySelector(".head .lines");if(el)el.textContent=lc+" ligne(s)";
+  const refEl=card.querySelector(".head .ref");if(refEl)refEl.textContent=d.ref||"(réf. manquante)";
+  const mandEl=card.querySelector(".head .mand");
+  if(mandEl) mandEl.textContent=d.admin.mandataire||"";
+  const nbEcarts=d.ecarts?Object.keys(d.ecarts).length:0;
+  const syncEl=card.querySelector(".head .synced");
+  if(syncEl&&d.synced){syncEl.className="synced "+(nbEcarts>0?"ecart":"yes");syncEl.textContent=nbEcarts>0?`${nbEcarts} écart(s) ⚠`:"synthèse ✓";}
+  const prev=card.querySelector('[data-role="preview"]');if(prev)renderPreview(prev,d);
+  // maj codes température affichés
+  card.querySelectorAll("table.tech tbody tr").forEach((tr,i)=>{
+    const t=d.tranches[i];if(!t)return;const b=tr.querySelector(".code #tc");if(b)b.textContent=codeTemp(t.temp);
+  });
+  updateFootCount();
+}
+function validTranches(d){return d.tranches.filter(t=>Number(t.qte)>0);}
+function countLines(d){return validTranches(d).length;}
+function renderPreview(prev,d){
+  const hs=validTranches(d);
+  if(hs.length===0){prev.innerHTML=`<div class="ptitle">Aperçu des lignes EMMY (codage automatique)</div>
+    <div class="empty-prev">Aucune housse saisie. Importez la synthèse ou renseignez une quantité.</div>`;return;}
+  let html=`<div class="ptitle">Aperçu des lignes EMMY (codage automatique)</div>`;
+  hs.forEach((t,i)=>{
+    const ref=i===0?d.ref:`${d.ref}-${i}`;
+    html+=`<div class="pline"><span class="pref">${ref||"(réf?)"}</span>
+      <span class="chip">${t.label}</span>
+      <span class="chip">DN <b>${t.dnCode}</b></span>
+      <span class="chip">T <b>${codeTemp(t.temp)}</b></span>
+      <span class="chip">type <b>${t.type==="echangeur"?1:0}</b></span>
+      <span class="chip">qté <b>${t.qte}</b></span></div>`;
+  });
+  prev.innerHTML=html;
+}
+function updateFootCount(){
+  let lines=0,ok=0;
+  dossiers.forEach(d=>{
+    if(fiche==="BAR-TH-161"){const n=countLines(d);lines+=n;if(n>0)ok++;}
+    else{lines+=1;if(d.metre!==""&&!isNaN(Number(d.metre)))ok++;}
+  });
+  $("#footCount").innerHTML=dossiers.length?`<b>${dossiers.length}</b> dossier(s) · <b>${lines}</b> ligne(s) EMMY · ${ok} prêt(s)`:"";
+}
+
+/* ===== CSV ===== */
+function emptyRow(){return new Array(EMMY_HEADER.length).fill("");}
+function setC(r,c,v){r[c-1]=(v==null?"":String(v));}
+function baseRow(d){
+  const a=d.admin,r=emptyRow();
+  setC(r,COL.code,fiche);setC(r,COL.dateDebut,a.dateDebut);setC(r,COL.dateFin,a.dateFin);setC(r,COL.dateFacture,"");
+  setC(r,COL.nomSite,a.nomSite);setC(r,COL.adresse,a.adresse);setC(r,COL.cp,a.cp);setC(r,COL.ville,a.ville);
+  setC(r,COL.benefRS,a.benefRS);setC(r,COL.benefSiren,a.benefSiren);
+  setC(r,COL.siegeAdr,a.siegeAdr);setC(r,COL.siegeCP,a.siegeCP);setC(r,COL.siegeVille,a.siegeVille);
+  setC(r,COL.proSiren,a.proSiren);setC(r,COL.proNom,a.proNom);setC(r,COL.parcelle,a.parcelle);setC(r,COL.prime,"PRIME");
+  setC(r,COL.ctrlSiren,a.ctrlSiren);setC(r,COL.ctrlNom,a.ctrlNom);setC(r,COL.siret,a.siret);
+  setC(r,COL.tel,a.tel);setC(r,COL.email,a.email);setC(r,COL.participation,a.participation);
+  setC(r,COL.mandataire,a.mandataire);setC(r,COL.mandSiren,a.mandSiren);setC(r,COL.neant,"NEANT");
+  setC(r,COL.paee,"0");setC(r,COL.bonus,"0");setC(r,COL.menageModeste,"0");
+  setC(r,COL.dept,a.dept);setC(r,COL.altitude,"0");setC(r,COL.iles,"0");setC(r,COL.nbOp,"1");setC(r,COL.qpv,"0");
+  setC(r,COL.totalPrec,a.totalPrec!==""?num2(a.totalPrec):"0.00");
+  setC(r,COL.totalClass,a.totalClass!==""?num2(a.totalClass):"0.00");
+  return r;
+}
+function rowsForDossier(d){
+  const rows=[];
+  if(fiche==="BAR-TH-161"){
+    validTranches(d).forEach((t,i)=>{
+      const r=baseRow(d);
+      setC(r,COL.ref,i===0?d.ref:`${d.ref}-${i}`);
+      setC(r,COL.dnAller,t.dnCode);setC(r,COL.temperature,codeTemp(t.temp));
+      setC(r,COL.typeInstall,t.type==="echangeur"?1:0);setC(r,COL.nbEntites,Number(t.qte).toFixed(1));
+      rows.push(r);
+    });
+  }else{
+    const r=baseRow(d);setC(r,COL.ref,d.ref);
+    if(d.metre!==""&&!isNaN(Number(d.metre)))setC(r,COL.metreLineaire,Number(d.metre).toFixed(1));
+    rows.push(r);
+  }
+  return rows;
+}
+function toLatin1Bytes(str){const out=new Uint8Array(str.length);for(let i=0;i<str.length;i++){const c=str.charCodeAt(i);out[i]=c<256?c:63;}return out;}
+function csvCell(v){v=String(v==null?"":v);return(v.includes(";")||v.includes('"')||v.includes("\n"))?'"'+v.replace(/"/g,'""')+'"':v;}
+function generate(){
+  let all=[],skipped=[];
+  dossiers.forEach(d=>{
+    const rows=rowsForDossier(d);
+    const empty=(fiche==="BAR-TH-161"&&validTranches(d).length===0)||(fiche==="BAR-TH-160"&&(d.metre===""||isNaN(Number(d.metre))));
+    if(empty)skipped.push(d.ref||"(réf?)"); else all=all.concat(rows);
+  });
+  if(all.length===0){setStatus($("#cfgStatus"),"Aucune ligne générable : complétez les données techniques.","err");return;}
+  const lines=[EMMY_HEADER.map(csvCell).join(";")];
+  all.forEach(r=>lines.push(r.map(csvCell).join(";")));
+  const content=lines.join("\r\n")+"\r\n";
+  const blob=new Blob([toLatin1Bytes(content)],{type:"text/csv;charset=ISO-8859-1"});
+  const t=new Date(),ymd=t.getFullYear()+String(t.getMonth()+1).padStart(2,"0")+String(t.getDate()).padStart(2,"0");
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download=`export_machine_${fiche.replace(/-/g,"")}_${ymd}.csv`;
+  document.body.appendChild(a);a.click();a.remove();
+  let msg=`CSV généré : ${all.length} ligne(s) sur ${dossiers.length} dossier(s).`;
+  if(skipped.length)msg+=` ${skipped.length} sans donnée technique non inclus : ${skipped.slice(0,5).join(", ")}${skipped.length>5?"…":""}.`;
+  setStatus($("#cfgStatus"),msg,"ok");
+}
+
+$("#ficheSelect").addEventListener("change",e=>{
+  fiche=e.target.value;
+  dossiers=[]; renderDossiers();
+  $("#cfgStatus").className="status"; $("#cfgStatus").textContent="";
+  $("#synStatus").className="status"; $("#synStatus").textContent="";
+  $("#genBtn").disabled=true; $("#reloadBtn").disabled=true;
+  $("#importBar").style.display="none";
+});
+$("#loadBtn").addEventListener("click",load);
+$("#reloadBtn").addEventListener("click",load);
+$("#genBtn").addEventListener("click",generate);
+$("#synBtn").addEventListener("click",()=>$("#synFile").click());
+$("#synFile").addEventListener("change",e=>{if(e.target.files[0])importSynthese(e.target.files[0]);e.target.value="";});
+// Drag and drop sur toute la barre d'import
+(function(){
+  const bar=$("#importBar");
+  // clic sur la zone (hors bouton) déclenche aussi le sélecteur
+  bar.addEventListener("click",e=>{ if(e.target.id!=="synBtn") $("#synFile").click(); });
+  ["dragenter","dragover"].forEach(ev=>bar.addEventListener(ev,e=>{
+    e.preventDefault();e.stopPropagation();bar.classList.add("drag");
+  }));
+  ["dragleave","dragend"].forEach(ev=>bar.addEventListener(ev,e=>{
+    e.preventDefault();e.stopPropagation();
+    if(ev==="dragleave" && bar.contains(e.relatedTarget)) return;
+    bar.classList.remove("drag");
+  }));
+  bar.addEventListener("drop",e=>{
+    e.preventDefault();e.stopPropagation();bar.classList.remove("drag");
+    const f=e.dataTransfer.files&&e.dataTransfer.files[0];
+    if(!f) return;
+    if(!/\.(xlsx|xls)$/i.test(f.name)){ setStatus($("#synStatus"),"Format non reconnu : déposez un fichier .xlsx ou .xls.","err"); return; }
+    importSynthese(f);
+  });
+  // éviter que le navigateur ouvre le fichier si lâché ailleurs
+  ["dragover","drop"].forEach(ev=>document.addEventListener(ev,e=>{
+    if(!bar.contains(e.target)){ e.preventDefault(); }
+  }));
+})();
+(function init(){const p=lsGet("emmy_pat");if(p){$("#pat").value=p;$("#patNote").style.display="block";}})();
+</script>
+</body>
+</html>
